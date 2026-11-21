@@ -46,4 +46,4 @@ API demo mengembalikan token login simulasi. Fake Store API tidak menyediakan en
 
 ## Repository
 
-Link repository GitHub: **belum tersedia; tambahkan URL setelah project dipush ke repository GitHub**.
+Link repository GitHub: [AndikaSaputra27/Mini-Project-Andika-N.S](https://github.com/AndikaSaputra27/Mini-Project-Andika-N.S).
