@@ -37,12 +37,12 @@ npm run preview
 
 ### Akun demo
 
-Fake Store API menyediakan akun demo berikut:
+Gunakan akun demo aplikasi berikut:
 
-- Username: `johnd`
-- Password: `m38rmF$`
+- Username: `Andika`
+- Password: `yuka99`
 
-API demo mengembalikan token login simulasi. Fake Store API tidak menyediakan endpoint registrasi atau persistensi akun; form register menggunakan endpoint simulasi `POST /users`, sehingga akun yang dibuat tidak dapat dipakai untuk login dan tidak tersimpan permanen. Token disimpan di browser untuk alur protected route, sedangkan Fake Store API dapat mengabaikan header otorisasi.
+Fake Store API tidak memungkinkan akun demo diubah. Saat login, aplikasi menerjemahkan kredensial di atas ke akun demo API (`johnd`) agar autentikasi tetap berfungsi. API mengembalikan token simulasi. Fake Store API tidak menyediakan endpoint registrasi atau persistensi akun; form register menggunakan endpoint simulasi `POST /users`, sehingga akun yang dibuat tidak dapat dipakai untuk login dan tidak tersimpan permanen. Token disimpan di browser untuk alur protected route, sedangkan Fake Store API dapat mengabaikan header otorisasi.
 
 ## Repository
 
