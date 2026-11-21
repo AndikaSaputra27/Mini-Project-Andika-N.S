@@ -1,4 +1,4 @@
-# Yuka-Store
+# Yuka Store
 
 Demo toko online untuk latihan React dan backend Node.js. Data katalog, akun, stok, pesanan, kupon, dan ulasan disimpan di file JSON lokal. Tidak ada pembayaran sungguhan.
 

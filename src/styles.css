@@ -70,9 +70,18 @@ button {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-size: 27px;
   font-weight: 700;
   letter-spacing: -1.4px;
+  white-space: nowrap;
+}
+
+.brand > img {
+  width: 34px;
+  height: 34px;
 }
 
 .brand span,
@@ -1020,6 +1029,11 @@ button {
   font-size: 22px;
 }
 
+.site-footer .brand > img {
+  width: 30px;
+  height: 30px;
+}
+
 .site-footer > span {
   color: var(--muted);
   font-size: 10px;
@@ -1153,10 +1167,9 @@ button {
 
 .auth-decoration {
   position: relative;
-  display: flex;
+  display: grid;
   min-height: 480px;
-  flex-direction: column;
-  justify-content: space-between;
+  place-items: center;
   padding: 35px;
   overflow: hidden;
   color: #fbf4ec;
@@ -1183,25 +1196,25 @@ button {
   left: 81px;
 }
 
-.auth-decoration > span:first-child {
+.auth-logo-lockup {
+  position: relative;
   z-index: 1;
-  color: var(--accent-soft);
-  font-size: 26px;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
 }
 
-.auth-decoration p {
-  z-index: 1;
-  margin: auto 0;
+.auth-logo-lockup img {
+  width: 148px;
+  height: 148px;
+}
+
+.auth-logo-lockup strong {
+  color: #f0ece4;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 28px;
-  line-height: 1.35;
-}
-
-.auth-decoration > span:last-child {
-  z-index: 1;
-  align-self: flex-end;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
 }
 
 .auth-panel {
@@ -1567,6 +1580,11 @@ button {
 
   .brand {
     font-size: 24px;
+  }
+
+  .brand > img {
+    width: 26px;
+    height: 26px;
   }
 
   .main-nav {

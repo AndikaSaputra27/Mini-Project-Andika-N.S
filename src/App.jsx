@@ -107,7 +107,8 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <Link className="brand" to="/">
-          Yuka<span>-</span>Store
+          <img src="/yuka-store-mark.svg" alt="" />
+          Yuka<span> Store</span>
         </Link>
         <span>Belanja harian, dibuat lebih sederhana.</span>
         <span>© 2026 Yuka-Store</span>
@@ -663,10 +664,11 @@ function RegisterPage() {
 function AuthLayout({ eyebrow, title, children }) {
   return (
     <section className="auth-page">
-      <div className="auth-decoration" aria-hidden="true">
-        <span>✳</span>
-        <p>PILIHAN YANG PAS.<br />HARI YANG LEBIH BAIK.</p>
-        <span>ys.</span>
+      <div className="auth-decoration">
+        <div className="auth-logo-lockup">
+          <img src="/yuka-store-mark.svg" alt="" />
+          <strong>Yuka Store</strong>
+        </div>
       </div>
       <div className="auth-panel">
         <Link className="back-link" to="/">← Kembali ke beranda</Link>
