@@ -8,6 +8,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+import AdminDashboard from "./AdminDashboard.jsx";
 import {
   DEMO_ACCOUNT,
   getProduct,
@@ -20,12 +21,11 @@ import {
   DEMO_PRODUCTS,
   FASHION_IMAGES,
   STORE_CATEGORIES,
-  getApparelCategory,
-  getDemoProduct,
   formatPrice,
-  normalizeApiProduct,
 } from "./data/demoProducts.js";
 import { useAuth } from "./context/AuthContext.jsx";
+import { useCart } from "./context/CartContext.jsx";
+import { CartPage, OrdersPage, ProductReviews } from "./CommercePages.jsx";
 import { ErrorMessage, Loading } from "./components/Feedback.jsx";
 import ProductCard from "./components/ProductCard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -67,12 +67,29 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
+            path="/orders"
+            element={
+              <ProtectedRoute role="customer">
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute role="admin">
                 <UsersPage />
               </ProtectedRoute>
             }
@@ -80,7 +97,7 @@ export default function App() {
           <Route
             path="/users/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute role="admin">
                 <UserDetailPage />
               </ProtectedRoute>
             }
@@ -111,11 +128,7 @@ function HomePage() {
     setLoading(true);
     setError("");
     try {
-      const apiProducts = await getProducts();
-      const apparelProducts = apiProducts
-        .filter((product) => getApparelCategory(product))
-        .map(normalizeApiProduct);
-      setProducts([...DEMO_PRODUCTS, ...apparelProducts]);
+      setProducts(await getProducts());
     } catch (requestError) {
       setError(requestError.message);
       setProducts(DEMO_PRODUCTS);
@@ -280,7 +293,7 @@ function HomePage() {
         </div>
 
         <p className="catalog-note">
-          Produk contoh dan data API hanya untuk melihat katalog; transaksi belum tersedia.
+          Demo pembelian tersedia. Pembayaran dan pengiriman disimulasikan untuk pembelajaran.
         </p>
         {error && (
           <p className="inline-notice" role="status">
@@ -423,6 +436,7 @@ function Pagination({ page, pageCount, onChange }) {
 
 function ProductDetailPage() {
   const { id } = useParams();
+  const { addItem } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -431,8 +445,7 @@ function ProductDetailPage() {
     setLoading(true);
     setError("");
     try {
-      const demoProduct = getDemoProduct(id);
-      setProduct(demoProduct || normalizeApiProduct(await getProduct(id)));
+      setProduct(await getProduct(id));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -469,37 +482,47 @@ function ProductDetailPage() {
           <div className="detail-rule" />
           <h2>Tentang produk</h2>
           <p className="detail-description">{product.description}</p>
-          <Link className="button button-dark detail-cta" to="/">
-            Lihat produk lainnya <span aria-hidden="true">↗</span>
-          </Link>
+          <div className="detail-actions">
+            <button
+              className="button button-dark detail-cta"
+              onClick={() => addItem(product)}
+              disabled={product.stock < 1}
+            >
+              {product.stock < 1 ? "Stok habis" : "Tambah ke keranjang"}
+            </button>
+            <span className="detail-stock">Stok tersedia: {product.stock}</span>
+          </div>
           <p className="detail-footnote">
-            {product.isDemo
-              ? "Produk contoh; harga dan ulasan hanya untuk demo."
-              : "Pilihan yang pas untuk hari-harimu."}
+            Produk dan transaksi ini hanya untuk simulasi pembelajaran.
           </p>
         </div>
       </div>
+      <ProductReviews productId={id} />
     </section>
   );
 }
 
 function LoginPage() {
-  const { token, signIn } = useAuth();
+  const { token, user, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (token) return <Navigate to="/users" replace />;
+  if (token) return <Navigate to={user?.role === "admin" ? "/admin" : "/orders"} replace />;
 
   async function handleSubmit(event) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
     try {
-      await signIn(form);
-      navigate(location.state?.from?.pathname || "/users", { replace: true });
+      const account = await signIn(form);
+      navigate(
+        location.state?.from?.pathname ||
+          (account.role === "admin" ? "/admin" : "/orders"),
+        { replace: true },
+      );
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -537,8 +560,9 @@ function LoginPage() {
           Belum punya akun? <Link to="/register">Daftar di sini</Link>
         </p>
         <p className="auth-hint">
-          Akun demo: username <strong>{DEMO_ACCOUNT.username}</strong>, password{" "}
-          <strong>{DEMO_ACCOUNT.password}</strong>
+          Pembeli: <strong>{DEMO_ACCOUNT.username}</strong> /{" "}
+          <strong>{DEMO_ACCOUNT.password}</strong>. Admin: <strong>admin</strong> /{" "}
+          <strong>admin123</strong>.
         </p>
       </form>
     </AuthLayout>
@@ -566,7 +590,7 @@ function RegisterPage() {
         email: form.email,
         username: form.username,
         password: form.password,
-        name: { firstname: form.firstname, lastname: form.lastname },
+        name: `${form.firstname} ${form.lastname}`.trim(),
       });
       navigate("/login", {
         state: { notice: "Pendaftaran berhasil dikirim. Silakan masuk." },
@@ -629,7 +653,7 @@ function RegisterPage() {
           Sudah punya akun? <Link to="/login">Masuk di sini</Link>
         </p>
         <p className="auth-hint">
-          Fake Store API hanya mensimulasikan pendaftaran; akun baru tidak tersimpan permanen.
+          Akun demo disimpan di database lokal proyek ini.
         </p>
       </form>
     </AuthLayout>
@@ -695,11 +719,11 @@ function UsersPage() {
 
   return (
     <section className="section-wrap users-page">
-      <span className="eyebrow">PELANGGAN YUKA-STORE</span>
+      <span className="eyebrow">ADMIN / PELANGGAN YUKA-STORE</span>
       <div className="section-heading users-heading">
         <div>
           <h1>Kenali komunitas<span className="heading-period">.</span></h1>
-          <p>Daftar pelanggan Yuka-Store, khusus untuk member.</p>
+          <p>Daftar akun pelanggan yang terdaftar di toko.</p>
         </div>
         <span className="private-badge"><span /> AREA MEMBER</span>
       </div>
@@ -712,15 +736,10 @@ function UsersPage() {
           {users.map((customer) => (
             <Link className="user-card" to={`/users/${customer.id}`} key={customer.id}>
               <span className="user-avatar">
-                {(customer.name?.firstname?.[0] || customer.username[0]).toUpperCase()}
-                {(customer.name?.lastname?.[0] || "").toUpperCase()}
+                {customer.name?.[0]?.toUpperCase() || customer.username[0].toUpperCase()}
               </span>
               <span className="user-card-copy">
-                <strong>
-                  {[customer.name?.firstname, customer.name?.lastname]
-                    .filter(Boolean)
-                    .join(" ")}
-                </strong>
+                <strong>{customer.name}</strong>
                 <span>@{customer.username}</span>
               </span>
               <span className="user-card-arrow" aria-hidden="true">↗</span>
@@ -766,15 +785,10 @@ function UserDetailPage() {
       <Link className="back-link" to="/users">← Kembali ke daftar pelanggan</Link>
       <div className="profile-card">
         <span className="profile-avatar">
-          {(customer.name?.firstname?.[0] || customer.username[0]).toUpperCase()}
-          {(customer.name?.lastname?.[0] || "").toUpperCase()}
+          {customer.name?.[0]?.toUpperCase() || customer.username[0].toUpperCase()}
         </span>
-        <span className="eyebrow">YUKA-STORE MEMBER / #{customer.id}</span>
-        <h1>
-          {[customer.name?.firstname, customer.name?.lastname]
-            .filter(Boolean)
-            .join(" ")}
-        </h1>
+        <span className="eyebrow">ADMIN / PELANGGAN #{customer.id}</span>
+        <h1>{customer.name}</h1>
         <p className="profile-username">@{customer.username}</p>
         <div className="profile-details">
           <ProfileItem label="Email" value={customer.email} />

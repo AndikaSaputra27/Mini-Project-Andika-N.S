@@ -1,8 +1,10 @@
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 
 export default function SiteHeader() {
   const { token, user, signOut } = useAuth();
+  const { count } = useCart();
 
   return (
     <header className="site-header">
@@ -14,7 +16,9 @@ export default function SiteHeader() {
           <NavLink to="/" end>
             Belanja
           </NavLink>
-          {token && <NavLink to="/users">Pelanggan</NavLink>}
+          <NavLink to="/cart">Keranjang{count > 0 ? ` (${count})` : ""}</NavLink>
+          {token && user?.role === "customer" && <NavLink to="/orders">Pesanan</NavLink>}
+          {token && user?.role === "admin" && <NavLink to="/admin">Admin</NavLink>}
         </nav>
         <div className="header-account">
           {token ? (

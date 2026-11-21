@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { login as loginRequest } from "../api.js";
+import { storeRequest } from "../api.js";
 
 const AuthContext = createContext(null);
 const TOKEN_KEY = "marketly_token";
@@ -12,20 +13,42 @@ export function AuthProvider({ children }) {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  useEffect(() => {
+    if (!token) return;
+    storeRequest("/auth/me")
+      .then(({ user: account }) => {
+        if (localStorage.getItem(TOKEN_KEY) !== token) return;
+        localStorage.setItem(USER_KEY, JSON.stringify(account));
+        setUser(account);
+      })
+      .catch((error) => {
+        if (localStorage.getItem(TOKEN_KEY) !== token) return;
+        console.warn("Sesi tidak dapat dipulihkan; silakan masuk kembali.", error);
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        setToken(null);
+        setUser(null);
+      });
+  }, [token]);
+
   async function signIn(credentials) {
     const result = await loginRequest(credentials);
-    if (!result.token) {
+    if (!result.token || !result.user) {
       throw new Error("Login gagal. Periksa kembali username dan password.");
     }
 
-    const account = { username: credentials.username };
+    const account = result.user;
     localStorage.setItem(TOKEN_KEY, result.token);
     localStorage.setItem(USER_KEY, JSON.stringify(account));
     setToken(result.token);
     setUser(account);
+    return account;
   }
 
   function signOut() {
+    storeRequest("/auth/logout", { method: "POST" }).catch((error) => {
+      console.error("Sesi server tidak dapat diakhiri.", error);
+    });
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setToken(null);

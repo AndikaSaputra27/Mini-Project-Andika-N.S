@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { formatPrice } from "../data/demoProducts.js";
+import { useCart } from "../context/CartContext.jsx";
 
 export default function ProductCard({ product, index }) {
+  const { addItem } = useCart();
+
   return (
     <article
       className="product-card"
@@ -35,6 +38,13 @@ export default function ProductCard({ product, index }) {
             <span aria-hidden="true">★</span> {product.rating?.rate ?? "—"}
           </span>
         </div>
+        <button
+          className="product-add-button"
+          disabled={product.stock < 1}
+          onClick={() => addItem(product)}
+        >
+          {product.stock < 1 ? "Stok habis" : "Tambah ke keranjang"}
+        </button>
       </div>
     </article>
   );
