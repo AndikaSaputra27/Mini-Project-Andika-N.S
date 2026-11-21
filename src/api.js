@@ -1,4 +1,6 @@
 const API_BASE_URL = "https://fakestoreapi.com";
+export const DEMO_ACCOUNT = { username: "Andika", password: "yuka99" };
+const API_DEMO_ACCOUNT = { username: "johnd", password: "m38rmF$" };
 
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -18,7 +20,6 @@ export async function apiRequest(path, options = {}) {
 
 export const getProducts = () => apiRequest("/products");
 export const getProduct = (id) => apiRequest(`/products/${id}`);
-export const getCategories = () => apiRequest("/products/categories");
 
 function customizeCustomer(user) {
   if (user.id !== 1) return user;
@@ -54,9 +55,15 @@ export async function getUser(id, token) {
 }
 
 export function login(credentials) {
+  const apiCredentials =
+    credentials.username === DEMO_ACCOUNT.username &&
+    credentials.password === DEMO_ACCOUNT.password
+      ? API_DEMO_ACCOUNT
+      : credentials;
+
   return apiRequest("/auth/login", {
     method: "POST",
-    body: JSON.stringify(credentials),
+    body: JSON.stringify(apiCredentials),
   });
 }
 

@@ -7,8 +7,8 @@ export default function SiteHeader() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" to="/" aria-label="Marketly beranda">
-          marketly<span>.</span>
+        <Link className="brand" to="/" aria-label="Yuka-Store beranda">
+          Yuka<span>-</span>Store
         </Link>
         <nav className="main-nav" aria-label="Navigasi utama">
           <NavLink to="/" end>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatPrice } from "../data/demoProducts.js";
 
 export default function ProductCard({ product, index }) {
   return (
@@ -11,7 +12,14 @@ export default function ProductCard({ product, index }) {
         to={`/products/${product.id}`}
         aria-label={`Lihat ${product.title}`}
       >
-        <img className="product-image" src={product.image} alt={product.title} />
+        <img
+          className={`product-image ${product.isDemo ? "product-image-demo" : ""}`}
+          src={product.image}
+          alt={product.title}
+          loading="lazy"
+          decoding="async"
+        />
+        {product.isDemo && <span className="product-badge">Produk contoh</span>}
         <span className="image-action" aria-hidden="true">
           →
         </span>
@@ -22,7 +30,7 @@ export default function ProductCard({ product, index }) {
           {product.title}
         </Link>
         <div className="product-meta">
-          <span className="product-price">${product.price.toFixed(2)}</span>
+          <span className="product-price">{formatPrice(product.price)}</span>
           <span className="product-rating">
             <span aria-hidden="true">★</span> {product.rating?.rate ?? "—"}
           </span>

@@ -9,13 +9,22 @@ import {
   useParams,
 } from "react-router-dom";
 import {
-  getCategories,
+  DEMO_ACCOUNT,
   getProduct,
   getProducts,
   getUser,
   getUsers,
   register as registerRequest,
 } from "./api.js";
+import {
+  DEMO_PRODUCTS,
+  FASHION_IMAGES,
+  STORE_CATEGORIES,
+  getApparelCategory,
+  getDemoProduct,
+  formatPrice,
+  normalizeApiProduct,
+} from "./data/demoProducts.js";
 import { useAuth } from "./context/AuthContext.jsx";
 import { ErrorMessage, Loading } from "./components/Feedback.jsx";
 import ProductCard from "./components/ProductCard.jsx";
@@ -23,6 +32,32 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import SiteHeader from "./components/SiteHeader.jsx";
 
 const PAGE_SIZE = 8;
+const CATEGORY_TILES = [
+  {
+    category: "Baju & Kemeja",
+    label: "Kemeja",
+    description: "Potongan rapi, tetap nyaman.",
+    image: FASHION_IMAGES.shirt,
+  },
+  {
+    category: "Hoodie & Jaket",
+    label: "Hoodie & Jaket",
+    description: "Teman untuk cuaca sejuk.",
+    image: FASHION_IMAGES.jacket,
+  },
+  {
+    category: "Celana",
+    label: "Celana",
+    description: "Pas untuk aktivitas harian.",
+    image: FASHION_IMAGES.trousers,
+  },
+  {
+    category: "Tas",
+    label: "Tas",
+    description: "Bawa yang kamu perlukan.",
+    image: FASHION_IMAGES.bag,
+  },
+];
 
 export default function App() {
   return (
@@ -55,21 +90,19 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <Link className="brand" to="/">
-          marketly<span>.</span>
+          Yuka<span>-</span>Store
         </Link>
-        <span>Pilihan sehari-hari, dikurasi untuk kamu.</span>
-        <span>© 2026 Marketly</span>
+        <span>Belanja harian, dibuat lebih sederhana.</span>
+        <span>© 2026 Yuka-Store</span>
       </footer>
     </>
   );
 }
 
 function HomePage() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState(DEMO_PRODUCTS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [categoryError, setCategoryError] = useState("");
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -78,9 +111,14 @@ function HomePage() {
     setLoading(true);
     setError("");
     try {
-      setProducts(await getProducts());
+      const apiProducts = await getProducts();
+      const apparelProducts = apiProducts
+        .filter((product) => getApparelCategory(product))
+        .map(normalizeApiProduct);
+      setProducts([...DEMO_PRODUCTS, ...apparelProducts]);
     } catch (requestError) {
       setError(requestError.message);
+      setProducts(DEMO_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -88,9 +126,6 @@ function HomePage() {
 
   useEffect(() => {
     loadProducts();
-    getCategories()
-      .then(setCategories)
-      .catch((requestError) => setCategoryError(requestError.message));
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -106,6 +141,16 @@ function HomePage() {
   }, [products, category, search]);
 
   const pageCount = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const bestSellers = useMemo(
+    () =>
+      [...products]
+        .sort(
+          (first, second) =>
+            (second.rating?.rate ?? 0) - (first.rating?.rate ?? 0),
+        )
+        .slice(0, 6),
+    [products],
+  );
   const visibleProducts = filteredProducts.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
@@ -121,35 +166,83 @@ function HomePage() {
     setPage(1);
   }
 
+  function browseCategory(nextCategory) {
+    chooseCategory(nextCategory);
+    document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <>
       <section className="hero">
+        <img
+          className="hero-image"
+          src={FASHION_IMAGES.hero}
+          alt=""
+          aria-hidden="true"
+        />
+        <div className="hero-shade" aria-hidden="true" />
         <div className="hero-content">
-          <span className="eyebrow"><span className="eyebrow-dot" /> THE EVERYDAY EDIT</span>
-          <h1>Good things,<br /><em>found here.</em></h1>
-          <p>Temukan pilihan favorit baru untuk menemani hari-harimu.</p>
+          <span className="eyebrow">
+            <span className="eyebrow-dot" /> KOLEKSI BARU / YUKA-STORE
+          </span>
+          <h1>Gaya yang<br /><em>bertahan lama.</em></h1>
+          <p>
+            Potongan santai, warna mudah dipadu, dan pilihan untuk hari-hari biasa.
+          </p>
           <a className="button button-dark hero-button" href="#catalog">
-            Jelajahi koleksi <span aria-hidden="true">↓</span>
+            Jelajahi koleksi <span aria-hidden="true">→</span>
           </a>
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="hero-orbit orbit-one" />
-          <div className="hero-orbit orbit-two" />
-          <div className="hero-art-card">
-            <span className="hero-art-spark">✳</span>
-            <span>find your<br />next favorite</span>
-            <span className="hero-art-mark">m.</span>
-          </div>
-          <span className="hero-sticker">A little<br />something<br />for you</span>
+        <div className="hero-index"><span>01</span> / YS-01</div>
+      </section>
+
+      <section className="benefit-strip" aria-label="Keunggulan Yuka-Store">
+        <div className="benefit-item">
+          <span aria-hidden="true">✦</span>
+          <p><strong>Fokus fashion</strong><small>Tas hingga celana dalam satu katalog</small></p>
         </div>
-        <div className="hero-index"><span>01</span> / 03</div>
+        <div className="benefit-item">
+          <span aria-hidden="true">◇</span>
+          <p><strong>Empat kategori</strong><small>Atasan, outerwear, bawahan, dan tas</small></p>
+        </div>
+        <div className="benefit-item">
+          <span aria-hidden="true">□</span>
+          <p><strong>Katalog demo</strong><small>Harga dan produk masih simulasi</small></p>
+        </div>
+      </section>
+
+      <section className="category-section section-wrap">
+        <div className="editorial-heading">
+          <div>
+            <span className="eyebrow">PILIH BERDASARKAN KATEGORI</span>
+            <h2>Elevated essentials<span className="heading-period">.</span></h2>
+          </div>
+          <p>Temukan potongan yang terasa paling kamu.</p>
+        </div>
+        <div className="category-grid">
+          {CATEGORY_TILES.map((item) => (
+            <button
+              className="category-tile"
+              key={item.category}
+              onClick={() => browseCategory(item.category)}
+            >
+              <img src={item.image} alt="" loading="lazy" />
+              <span className="category-tile-shade" />
+              <span className="category-tile-copy">
+                <strong>{item.label}</strong>
+                <small>{item.description}</small>
+                <span>JELAJAHI <span aria-hidden="true">→</span></span>
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="catalog section-wrap" id="catalog">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">CURATED FOR YOU</span>
-            <h2>Shop the collection<span className="heading-period">.</span></h2>
+            <span className="eyebrow">NEW ARRIVALS</span>
+            <h2>Potongan pilihan<span className="heading-period">.</span></h2>
           </div>
           <label className="search-box">
             <span aria-hidden="true">⌕</span>
@@ -171,7 +264,7 @@ function HomePage() {
             >
               Semua
             </button>
-            {categories.map((item) => (
+            {STORE_CATEGORIES.map((item) => (
               <button
                 className={`category-chip ${category === item ? "selected" : ""}`}
                 key={item}
@@ -186,15 +279,17 @@ function HomePage() {
           </span>
         </div>
 
-        {categoryError && (
+        <p className="catalog-note">
+          Produk contoh dan data API hanya untuk melihat katalog; transaksi belum tersedia.
+        </p>
+        {error && (
           <p className="inline-notice" role="status">
-            Kategori belum dapat dimuat: {categoryError}
+            Data API tidak dapat dimuat ({error}). Produk contoh tetap tersedia.{" "}
+            <button className="retry-link" onClick={loadProducts}>Coba lagi</button>
           </p>
         )}
         {loading ? (
           <Loading label="Menyiapkan pilihan untukmu..." />
-        ) : error ? (
-          <ErrorMessage message={error} onRetry={loadProducts} />
         ) : visibleProducts.length ? (
           <>
             <div className="product-grid">
@@ -224,6 +319,69 @@ function HomePage() {
             </button>
           </div>
         )}
+      </section>
+
+      <section className="collection-feature">
+        <div className="feature-copy">
+          <span className="eyebrow">KOLEKSI HARIAN</span>
+          <h2>Ringkas.<br />Refined.<br /><em>Effortless.</em></h2>
+          <p>
+            Padukan outerwear dan celana untuk tampilan santai yang tetap rapi.
+          </p>
+          <button
+            className="button button-gold"
+            onClick={() => browseCategory("Hoodie & Jaket")}
+          >
+            Lihat outerwear <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <div className="feature-art">
+          <img src={FASHION_IMAGES.collection} alt="" loading="lazy" />
+        </div>
+      </section>
+
+      <section className="best-sellers section-wrap">
+        <div className="editorial-heading">
+          <div>
+            <span className="eyebrow">FAVORIT PILIHAN</span>
+            <h2>Yang paling disukai<span className="heading-period">.</span></h2>
+          </div>
+          <a className="subtle-link" href="#catalog">LIHAT KATALOG <span>→</span></a>
+        </div>
+        <div className="product-grid best-seller-grid">
+          {bestSellers.map((product, index) => (
+            <ProductCard key={product.id} product={product} index={index} />
+          ))}
+        </div>
+      </section>
+
+      <section className="journal-section section-wrap">
+        <div className="editorial-heading journal-heading">
+          <div>
+            <span className="eyebrow">DARI CATATAN KAMI</span>
+            <h2>Style, care, repeat<span className="heading-period">.</span></h2>
+          </div>
+        </div>
+        <div className="journal-grid">
+          <article className="journal-card">
+            <img src={FASHION_IMAGES.shirtLook} alt="" loading="lazy" />
+            <span className="eyebrow">PANDUAN GAYA</span>
+            <h3>Satu kemeja, banyak kemungkinan.</h3>
+            <p>Mulai dari tampilan santai sampai rapi, tanpa banyak usaha.</p>
+          </article>
+          <article className="journal-card">
+            <img src={FASHION_IMAGES.jacket} alt="" loading="lazy" />
+            <span className="eyebrow">RAWAT PAKAIAN</span>
+            <h3>Jaga jaket tetap nyaman dipakai.</h3>
+            <p>Kebiasaan kecil yang membuat pakaian lebih awet.</p>
+          </article>
+          <article className="journal-card">
+            <img src={FASHION_IMAGES.bag} alt="" loading="lazy" />
+            <span className="eyebrow">PILIHAN HARIAN</span>
+            <h3>Tas yang pas untuk agenda padat.</h3>
+            <p>Pilih bentuk dan ukuran sesuai barang yang kamu bawa.</p>
+          </article>
+        </div>
       </section>
     </>
   );
@@ -273,7 +431,8 @@ function ProductDetailPage() {
     setLoading(true);
     setError("");
     try {
-      setProduct(await getProduct(id));
+      const demoProduct = getDemoProduct(id);
+      setProduct(demoProduct || normalizeApiProduct(await getProduct(id)));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -297,7 +456,7 @@ function ProductDetailPage() {
       <div className="product-detail">
         <div className="detail-image-panel">
           <img src={product.image} alt={product.title} />
-          <span className="detail-image-caption">MARKETLY / SELECTED GOODS</span>
+          <span className="detail-image-caption">YUKA-STORE / PILIHAN TOKO</span>
         </div>
         <div className="detail-copy">
           <span className="eyebrow">{product.category}</span>
@@ -306,14 +465,18 @@ function ProductDetailPage() {
             <span aria-hidden="true">★</span> {product.rating?.rate ?? "—"}
             <span>({product.rating?.count ?? 0} ulasan)</span>
           </div>
-          <p className="detail-price">${product.price.toFixed(2)}</p>
+          <p className="detail-price">{formatPrice(product.price)}</p>
           <div className="detail-rule" />
           <h2>Tentang produk</h2>
           <p className="detail-description">{product.description}</p>
           <Link className="button button-dark detail-cta" to="/">
             Lihat produk lainnya <span aria-hidden="true">↗</span>
           </Link>
-          <p className="detail-footnote">Produk pilihan, dikirim dengan perhatian.</p>
+          <p className="detail-footnote">
+            {product.isDemo
+              ? "Produk contoh; harga dan ulasan hanya untuk demo."
+              : "Pilihan yang pas untuk hari-harimu."}
+          </p>
         </div>
       </div>
     </section>
@@ -374,7 +537,8 @@ function LoginPage() {
           Belum punya akun? <Link to="/register">Daftar di sini</Link>
         </p>
         <p className="auth-hint">
-          Demo API: username <strong>johnd</strong>, password <strong>m38rmF$</strong>
+          Akun demo: username <strong>{DEMO_ACCOUNT.username}</strong>, password{" "}
+          <strong>{DEMO_ACCOUNT.password}</strong>
         </p>
       </form>
     </AuthLayout>
@@ -415,7 +579,7 @@ function RegisterPage() {
   }
 
   return (
-    <AuthLayout eyebrow="JOIN THE GOOD FIND" title="Buat akun Marketly.">
+    <AuthLayout eyebrow="MULAI DARI SINI" title="Buat akun Yuka-Store.">
       <form className="auth-form" onSubmit={handleSubmit}>
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="form-row">
@@ -477,8 +641,8 @@ function AuthLayout({ eyebrow, title, children }) {
     <section className="auth-page">
       <div className="auth-decoration" aria-hidden="true">
         <span>✳</span>
-        <p>GOOD FINDS.<br />GOOD FEELING.</p>
-        <span>m.</span>
+        <p>PILIHAN YANG PAS.<br />HARI YANG LEBIH BAIK.</p>
+        <span>ys.</span>
       </div>
       <div className="auth-panel">
         <Link className="back-link" to="/">← Kembali ke beranda</Link>
@@ -531,11 +695,11 @@ function UsersPage() {
 
   return (
     <section className="section-wrap users-page">
-      <span className="eyebrow">MEMBER DIRECTORY</span>
+      <span className="eyebrow">PELANGGAN YUKA-STORE</span>
       <div className="section-heading users-heading">
         <div>
           <h1>Kenali komunitas<span className="heading-period">.</span></h1>
-          <p>Daftar pelanggan Marketly, khusus untuk member.</p>
+          <p>Daftar pelanggan Yuka-Store, khusus untuk member.</p>
         </div>
         <span className="private-badge"><span /> AREA MEMBER</span>
       </div>
@@ -605,7 +769,7 @@ function UserDetailPage() {
           {(customer.name?.firstname?.[0] || customer.username[0]).toUpperCase()}
           {(customer.name?.lastname?.[0] || "").toUpperCase()}
         </span>
-        <span className="eyebrow">MARKETLY MEMBER / #{customer.id}</span>
+        <span className="eyebrow">YUKA-STORE MEMBER / #{customer.id}</span>
         <h1>
           {[customer.name?.firstname, customer.name?.lastname]
             .filter(Boolean)

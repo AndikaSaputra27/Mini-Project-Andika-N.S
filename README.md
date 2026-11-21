@@ -1,4 +1,4 @@
-# Marketly
+# Yuka-Store
 
 Marketplace frontend untuk mini project React Fundamentals. Aplikasi menggunakan Fake Store API untuk menampilkan katalog produk, detail produk, autentikasi demo, serta direktori pelanggan.
 
@@ -11,13 +11,17 @@ Marketplace frontend untuk mini project React Fundamentals. Aplikasi menggunakan
 
 ## Fitur
 
-- Katalog produk dengan pencarian, filter kategori, dan pagination client-side.
+- Katalog fashion tas, baju/kemeja, hoodie/jaket, dan celana dengan pencarian, filter kategori, serta pagination client-side.
 - Halaman detail produk, termasuk rating dan deskripsi.
 - Form login terhubung ke `POST /auth/login`, sesi token disimpan di `localStorage`.
 - Form register mengirim data ke `POST /users`.
 - Daftar pelanggan dan halaman detail yang dilindungi route berbasis token.
 - State loading, error dengan tombol coba lagi, dan empty state.
 - Layout responsif untuk desktop dan mobile.
+
+Katalog menggabungkan item fashion dari Fake Store API dengan produk contoh lokal untuk melengkapi kategori. Produk contoh dan harganya hanya untuk simulasi; website belum memproses transaksi.
+
+Foto editorial dan produk contoh menggunakan gambar Unsplash, sedangkan produk API memakai foto aslinya dari Fake Store API. Gambar memerlukan koneksi internet.
 
 ## Menjalankan project
 
